@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <title>HDFC Mutual Fund FAQ — facts only</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Mutual Fund FAQ</h1>
+      <p class="welcome">Ask factual questions about HDFC Large Cap, Flexi Cap, ELSS Tax Saver and Mid Cap funds.</p>
+    </header>
+
+    <p class="disclaimer" role="note"><strong>Facts-only. No investment advice.</strong></p>
+
+    <section aria-labelledby="examples-label" class="examples">
+      <h2 id="examples-label">Try an example</h2>
+      <ul>
+        <li><button type="button" class="example">What is the expense ratio of HDFC Flexi Cap Fund?</button></li>
+        <li><button type="button" class="example">What is the lock-in period for HDFC ELSS Tax Saver?</button></li>
+        <li><button type="button" class="example">How do I download my capital-gains statement?</button></li>
+      </ul>
+    </section>
+
+    <form id="ask-form" autocomplete="off" novalidate>
+      <label for="question" class="visually-hidden">Your question</label>
+      <textarea id="question" name="question" rows="2" maxlength="500" required
+                placeholder="e.g. What is the exit load of HDFC Mid Cap Fund?"></textarea>
+      <div class="form-row">
+        <span id="count" class="count" aria-live="off">0 / 500</span>
+        <button type="submit" id="submit">Ask</button>
+      </div>
+      <p class="hint">Please don't enter PAN, Aadhaar, account or folio numbers, phone numbers, emails or OTPs.</p>
+    </form>
+
+    <section id="answer" class="card" hidden aria-live="polite">
+      <p id="answer-label" class="card-label"></p>
+      <p id="answer-text" class="card-text"></p>
+      <p id="answer-source" class="card-meta" hidden>Source: <a id="answer-link" target="_blank" rel="noopener noreferrer"></a></p>
+      <p id="answer-updated" class="card-meta" hidden></p>
+    </section>
+  </main>
+  <script src="app.js" defer></script>
+</body>
+</html>

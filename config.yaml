@@ -1,0 +1,180 @@
+embedding:
+  model: sentence-transformers/all-MiniLM-L6-v2
+  onnx_dir: data/index/model
+  dim: 384
+
+chunking:
+  chunk_size_tokens: 200     # must stay < 256 (model's max sequence length)
+  chunk_overlap_tokens: 40
+  max_total_tokens: 256      # hard cap per chunk incl. header and [CLS]/[SEP]; the chunker fails above it
+  min_chunk_tokens: 50       # smaller chunks are merged into a neighbour when the result fits under the cap
+  # Multi-scheme documents: keep only the pages whose title line names one of
+  # allowed_schemes (other than "general") and tag their chunks with that scheme.
+  # Pages for other funds, and mixed pages (glossary, market review, annexures,
+  # performance tables, riskometer index), are dropped.
+  scheme_page_filter_doc_types: [factsheet]
+  # Scheme pages (s01–s04): one chunk per labelled fact instead of one chunk for the
+  # whole fact list, so a question about one fact (e.g. minimum SIP) matches a chunk
+  # about only that fact. Each chunk is "<scheme name> (<plan>) - <label>: <value>", e.g.
+  # "HDFC ELSS Tax Saver Fund (Direct Plan) - Lock-in period: 3 years". Name and plan
+  # come from the page's title line written by pipeline.load. `line` is the label
+  # pipeline.load writes; `label` is the label used in the chunk. Repeated lines with
+  # the same label (exit load bullets) become one chunk. A line whose label is not
+  # listed, or a missing `required` fact, stops the chunker.
+  fact_chunks:
+    doc_types: [scheme_page]
+    facts:
+      - {line: "Total Expense Ratio (TER), Direct Plan", label: "Total Expense Ratio (TER)", required: true}
+      - {line: "Exit load", label: "Exit load", required: true}
+      - {line: "Entry load", label: "Entry load", required: true}
+      - {line: "Minimum SIP", label: "Minimum SIP", required: true}
+      - {line: "Lock-in period", label: "Lock-in period"}
+      - {line: "Riskometer", label: "Riskometer"}
+      - {line: "Benchmark", label: "Benchmark"}
+  doc_type_labels:          # used in each chunk's context header
+    scheme_page: Scheme page
+    factsheet: Factsheet
+    kim: Key Information Memorandum
+    sid: Scheme Information Document
+    learning_page: Learning page
+    statement_guide: Statement guide
+    regulator_faq: Regulator FAQ
+    investor_guide: Investor guide
+
+vector_store:
+  persist_dir: data/chroma
+  collection: hdfc_mf_faq
+  distance: cosine
+  # Printed by pipeline.store after every run and asserted by tests/test_store.py (check 6.3).
+  # The top-1 result must match `scheme` and/or `doc_type` (every one given) and carry its
+  # source's URL. A query marked `informational: true` is printed but not asserted (none are now).
+  smoke_queries:
+    - {query: "expense ratio HDFC Flexi Cap", scheme: HDFC Flexi Cap}
+    - {query: "exit load HDFC Mid Cap", scheme: HDFC Mid Cap}
+    - {query: "ELSS lock-in", scheme: HDFC ELSS Tax Saver}
+    - {query: "download capital gains statement", doc_type: statement_guide}
+    - {query: "minimum SIP amount HDFC Large Cap", scheme: HDFC Large Cap, doc_type: scheme_page}
+
+retrieval:
+  top_k: 5
+  # Tuned in phase 9: short in-scope queries score 0.316-0.339 ("elss lockin", "ELSS lock in");
+  # off-topic probes top out at 0.281 ("weather today in Mumbai"). Gemini's answerable flag
+  # is the second filter for anything that clears this bar.
+  min_score: 0.30
+  # Questions about these facts, with a scheme detected, put that scheme's scheme-page
+  # chunk for the fact first (C1). The scheme page is the current value; the factsheet
+  # is a monthly snapshot (e.g. TER "as on" the factsheet date).
+  prefer_scheme_page:
+    - {keywords: ["expense ratio", "ter", "total expense ratio"], label: "Total Expense Ratio (TER)"}
+  # Chunks matching any of these (case-insensitive regex) are never retrieved, so returns
+  # tables and AUM figures never reach Gemini. NAV is not filtered here because explainer
+  # chunks use illustrative NAVs; the prompt and answer.blocked_patterns cover NAV figures.
+  exclude_patterns:
+    - 'returns? \(%\)'                        # performance tables (factsheet, KIM)
+    - 'last \d+ years?\s+-?\d'                # "Last 3 Years 16.98 ..." table rows
+    - '\bCAGR\b'
+    - 'since inception returns'
+    - 'assets under management[^.]{0,80}(₹|\bcr\b)'   # AUM figures
+
+
+llm:
+  provider: gemini
+  # Checked 2026-11-08 against Google's Gemini API docs (models, pricing, deprecations):
+  # gemini-2.5-flash is deprecated (shutdown 2026-12-01). gemini-3.5-flash-lite is
+  # stable, free of charge on the free tier, and supports structured (JSON) output.
+  model: gemini-3.5-flash-lite
+  temperature: 0
+  max_output_tokens: 1024    # room for the model's internal thinking plus the short JSON answer
+  timeout_s: 20
+  retry_backoff_s: 2         # one retry on HTTP 429 / 5xx / timeout
+
+answer:
+  max_sentences: 3
+  disclaimer: "Facts-only. No investment advice."
+  # An answer matching any of these (case-insensitive) is replaced by the performance
+  # template: never quote NAV, returns or AUM figures. "Total Return(s) Index" (a benchmark
+  # name) is removed before checking.
+  blocked_patterns:
+    - '\bNAV\b[^.]{0,30}(₹|rs\.?|inr)\s*\d'
+    - '(₹|rs\.?|inr)\s*[\d,.]+[^.]{0,20}\bNAV\b'
+    - '\d[\d,.]*\s*%[^.]{0,40}\breturns?\b'
+    - '\breturns?\b[^.]{0,40}\d[\d,.]*\s*%'
+    - '\bCAGR\b'
+    - '\b(AUM|assets under management)\b[^.]{0,60}\d'
+    - '(₹|rs\.?|inr)\s*[\d,.]+\s*(cr|crore)'
+
+schemes:
+  # Lowercase aliases; hyphens are treated as spaces. Former names included.
+  aliases:
+    HDFC Large Cap: ["large cap", "largecap", "hdfc top 100", "top 100 fund"]
+    HDFC Flexi Cap: ["flexi cap", "flexicap", "hdfc equity fund"]
+    HDFC ELSS Tax Saver: ["elss", "tax saver", "taxsaver", "tax saving fund"]
+    HDFC Mid Cap: ["mid cap", "midcap", "mid cap opportunities"]
+
+# Host allowed if it equals an entry or ends with "." + entry (subdomains allowed)
+source_allowlist: [hdfcfund.com, sebi.gov.in, amfiindia.com]
+
+allowed_publishers: [HDFC MF, SEBI, AMFI]
+allowed_doc_types:
+  - scheme_page
+  - factsheet
+  - kim
+  - sid
+  - learning_page
+  - statement_guide
+  - regulator_faq
+  - investor_guide
+allowed_schemes:
+  - HDFC Large Cap
+  - HDFC Flexi Cap
+  - HDFC ELSS Tax Saver
+  - HDFC Mid Cap
+  - general
+
+paths:
+  sources_csv: sources.csv
+  manual_dir: data/manual      # pages saved by hand from a browser when a site blocks downloads
+  raw_dir: data/raw
+  loaded_dir: data/loaded
+  chunks_dir: data/chunks
+  embeddings_dir: data/embeddings
+  index_dir: data/index
+
+collect:
+  user_agent: "hdfc-mf-faq-rag/0.1 (educational prototype)"
+  timeout_s: 30
+  delay_between_requests_s: 1.0
+
+loader:
+  min_chars: 300               # flag documents shorter than this
+  next_data:                   # scheme pages: read facts from <script id="__NEXT_DATA__">
+    doc_types: [scheme_page]
+    path: props.pageProps.singleFundResponse.data.details.0.Overview.data
+    required: [terDirecct, exitLoad, entryLoad, minimumSip]   # "terDirecct" is the site's spelling
+    optional: [lockInValue, risk, benchmark]
+  pdf_column_doc_types: [factsheet]   # multi-column layouts: split each page at column gutters
+  strip_phrases:                      # site clutter that trafilatura keeps on hdfcfund.com pages
+    - "Entering text into the form field will trigger a list of options"
+    - "Trending Searches"
+
+templates:
+  # URLs from sources.csv only (formatter checks the host allow-list at runtime;
+  # tests/test_guardrails.py checks every link is in sources.csv).
+  # refusal_link: AMFI investor-education booklet (s16).
+  refusal_link: "https://www.amfiindia.com/uploads/AMFI_Understanding_Mutual_Funds_IAP_Booklet_Final_Website_version_860a5b77aa.pdf"
+  factsheet_links:           # scheme -> official factsheet URL (s05 covers all four)
+    HDFC Large Cap: "https://files.hdfcfund.com/s3fs-public/2026-07/HDFC%20MF%20Factsheet%20-%20June%202026.pdf"
+    HDFC Flexi Cap: "https://files.hdfcfund.com/s3fs-public/2026-07/HDFC%20MF%20Factsheet%20-%20June%202026.pdf"
+    HDFC ELSS Tax Saver: "https://files.hdfcfund.com/s3fs-public/2026-07/HDFC%20MF%20Factsheet%20-%20June%202026.pdf"
+    HDFC Mid Cap: "https://files.hdfcfund.com/s3fs-public/2026-07/HDFC%20MF%20Factsheet%20-%20June%202026.pdf"
+    general: "https://files.hdfcfund.com/s3fs-public/2026-07/HDFC%20MF%20Factsheet%20-%20June%202026.pdf"
+  texts:
+    refusal: "I can only share facts from official sources and can't give investment advice or opinions. For help understanding mutual funds, see this investor-education guide."
+    performance: "I don't quote or compare NAV, returns or fund size. Please see the scheme's official factsheet for its performance data."
+    out_of_scope: "I can only answer questions about HDFC Large Cap, Flexi Cap, ELSS Tax Saver and Mid Cap funds, using official sources."
+    not_found: "I couldn't find this in the official sources I use. Please check the scheme documents or this investor-education guide."
+    pii_warning: "Please don't share personal details such as PAN, Aadhaar, account or folio numbers, phone numbers, email addresses or OTPs. I can't look up your account and I haven't stored your message."
+    need_scheme: "Please name the fund you're asking about: HDFC Large Cap, Flexi Cap, ELSS Tax Saver or Mid Cap Fund. These facts differ from fund to fund, so I won't guess."
+    error: "The service is busy, please retry in a moment."
+    invalid: "Please enter a question of 1 to 500 characters."
+  max_question_chars: 500

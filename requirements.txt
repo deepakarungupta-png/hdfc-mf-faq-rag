@@ -1,0 +1,8 @@
+# Vercel runtime (phases 7–10). Keep this small: no torch, sentence-transformers or chromadb.
+onnxruntime
+tokenizers
+numpy
+google-genai
+fastapi
+pyyaml
+python-dotenv

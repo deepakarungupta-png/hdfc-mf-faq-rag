@@ -1,0 +1,14 @@
+# Offline pipeline (phases 2–6). Not deployed to Vercel.
+requests
+trafilatura
+pypdf
+pdfplumber
+sentence-transformers
+chromadb
+torch          # ONNX export (pipeline.export uses torch.onnx; optimum 1.x fails under transformers 5)
+onnx
+onnxruntime    # tests/test_parity.py
+numpy
+pyyaml
+python-dotenv
+pytest

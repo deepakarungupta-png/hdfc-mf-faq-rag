@@ -1,0 +1,7 @@
+{
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "built_on": "2026-11-07T19:27:17+00:00",
+  "corpus_last_updated": "2026-11-08",
+  "count": 991,
+  "dim": 384
+}

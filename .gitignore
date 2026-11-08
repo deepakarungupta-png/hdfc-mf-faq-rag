@@ -1,0 +1,15 @@
+.venv/
+.env
+__pycache__/
+data/raw/*
+data/manual/*
+data/loaded/*
+data/chunks/*
+data/embeddings/*
+data/chroma/*
+!data/*/.gitkeep
+.vercel/
+.DS_Store
+data/*.staging/
+data/index/*.staging/
+data/index/.*.tmp
