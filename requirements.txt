@@ -6,3 +6,4 @@ google-genai
 fastapi
 pyyaml
 python-dotenv
+httpx
