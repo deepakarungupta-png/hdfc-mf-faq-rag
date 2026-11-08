@@ -431,6 +431,19 @@ python eval/run_eval.py --base-url http://localhost:8000
 5. Deploy a preview with `vercel`. Promote it with `vercel --prod` only after the checks below pass.
 6. `README.md` (a deliverable): setup steps, scope (AMC and schemes), how to rebuild the corpus (`python -m pipeline.run_all`), how to deploy, known limits (from architecture §10), the disclaimer snippet, and the live URL.
 
+### Status (2026-11-08): files prepared, not deployed
+Done: tasks 1–3 and the deploy section of the README. Not done yet: tasks 4–5 (`vercel link`, `vercel env add`, `vercel`, `vercel --prod`) and the live URL. The Vercel CLI has not been run.
+
+- **`vercel.json`**:
+  - `functions["api/ask.py"]`: Vercel's built-in Python runtime picks this up from the `.py` extension, so no `runtime` key is needed. It sets `includeFiles: "{data/index/**,config.yaml}"`, `memory: 1024` and `maxDuration: 30`.
+  - Routing: Vercel maps `api/ask.py` to `/api/ask` by file name, and the FastAPI app's route is also `/api/ask`, so no rewrite is needed.
+  - `framework: null`, `buildCommand: null` and `outputDirectory: "public"`: `public/` is served as static files at `/`.
+- **`.vercelignore`**: excludes `data/raw`, `data/loaded`, `data/chunks`, `data/embeddings`, `data/chroma`, `data/manual`, `.venv`, `tests`, `eval`, `requirements-pipeline.txt` and `.env`. It also excludes `pipeline/` and `scripts/`, which the function doesn't import.
+- **`data/index/`** was already committed. `model.onnx` is about 90 MB, which is under GitHub's 100 MB per-file limit (GitHub warns above 50 MB), so Git LFS isn't needed.
+- **10.1 size check, done locally:** `pip install --target --platform manylinux2014_x86_64 --python-version 3.12 -r requirements.txt` comes to about 186 MB without `__pycache__`, and onnxruntime (66 MB) and numpy (67 MB with its libs) are the biggest parts. `data/index` adds about 90 MB, for a total of about 274 MB unzipped (140 MB zipped). Vercel's Python bundle limit is 500 MB, so this is about 55% of it. torch, chromadb and sentence-transformers are not installed.
+- **Local check:** `DEV_STATIC=1 uvicorn api.ask:app` serves `/` and `/app.js` (200). `run_eval.py --only prd-1,prd-2,prd-7,prd-8,prd-9,prd-10,no-scheme-ter,empty` passed 8/8. The server log has only `{type, scheme, top_score, cited_source_id, latency_ms}` and no question text. The full 32/32 results in `eval/` are left unchanged.
+- **Still to verify on the real preview (10.1–10.5):** the actual build output size, the cold-start time (loading the 90 MB ONNX model and onnxruntime), and the eval against the preview URL.
+
 ### Run
 ```bash
 vercel            # preview

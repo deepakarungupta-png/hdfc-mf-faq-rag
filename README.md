@@ -86,6 +86,26 @@ python eval/run_eval.py --base-url http://localhost:8000  # needs the server run
 
 `eval/run_eval.py` runs the 10 PRD acceptance tests and 22 edge cases in `eval/test_questions.yaml`. For each case it checks the response type, the link (exactly one URL from `sources.csv`, or none where expected), the 3-sentence cap, the last-updated date, and that the text has no return, NAV or AUM figures. It spaces requests that may reach Gemini at least 7 seconds apart (`--delay`). It writes `eval/results.md`, `eval/results.json` and [`eval/sample_qa.md`](eval/sample_qa.md).
 
+## Deploy (Vercel)
+
+The deployment is a static frontend (`public/`) plus one Python function (`api/ask.py`, served at `/api/ask`). Two files configure it:
+
+- **`vercel.json`**: serves `public/` as static files, and bundles `data/index/**` (the vector snapshot and ONNX model) and `config.yaml` with the function. It also gives the function 1024 MB of memory and a 30-second time limit.
+- **`.vercelignore`**: keeps everything else out of the upload, including the offline pipeline data (`data/raw`, `loaded`, `chunks`, `embeddings`, `chroma`, `manual`), `.venv`, `tests`, `eval`, `pipeline`, `scripts`, `requirements-pipeline.txt` and `.env`.
+
+The function installs only `requirements.txt` (onnxruntime, tokenizers, numpy, google-genai, fastapi, pyyaml, python-dotenv), with no torch or chromadb. Measured locally with Linux x86_64 wheels, the dependencies plus `data/index` come to about 274 MB unzipped. Vercel's limit for Python bundles is 500 MB.
+
+```bash
+npm i -g vercel
+vercel link                      # create or link the project
+vercel env add GEMINI_API_KEY    # for Production and Preview; never commit the key
+vercel                           # preview deployment
+python eval/run_eval.py --base-url https://<preview-url>   # should match the local pass rate
+vercel --prod                    # promote once the eval passes
+```
+
+Status: the config files are ready, but nothing has been deployed yet. There is no live URL or measured cold-start time yet.
+
 ## Known limits
 
 - **Facts are only as current as the last pipeline run.** Every answer shows its source's fetch date. All sources here were fetched on 2026-11-08.

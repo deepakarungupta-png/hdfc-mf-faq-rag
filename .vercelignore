@@ -1,0 +1,22 @@
+# Offline pipeline data (only data/index/ is deployed)
+data/raw
+data/loaded
+data/chunks
+data/embeddings
+data/chroma
+data/manual
+data/*.staging
+data/index/*.staging
+
+# Local tooling, tests, eval, pipeline-only deps, secrets
+.venv
+tests
+eval
+pipeline
+scripts
+requirements-pipeline.txt
+.env
+.env.*
+!.env.example
+__pycache__
+.DS_Store

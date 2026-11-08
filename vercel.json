@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": "public",
+  "functions": {
+    "api/ask.py": {
+      "includeFiles": "{data/index/**,config.yaml}",
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
+}
