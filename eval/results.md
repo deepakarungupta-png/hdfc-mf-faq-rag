@@ -1,6 +1,6 @@
 # Eval results
 
-Run on 2026-11-08 against `http://localhost:8000`: **32/32 passed**.
+Run on 2026-11-08 against `https://hdfc-mf-faq-rag-orcin.vercel.app`: **32/32 passed**.
 
 | id | question | expected | got | status | link | date | sentences | figures | content | result |
 |---|---|---|---|---|---|---|---|---|---|---|

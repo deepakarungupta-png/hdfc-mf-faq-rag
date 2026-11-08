@@ -16,7 +16,7 @@ Last updated from sources: 2026-11-08
 
 **Type:** `answer`
 
-HDFC ELSS Tax Saver Fund (Direct Plan) has a lock-in period of 3 years.
+The lock-in period for HDFC ELSS Tax Saver Fund (Direct Plan) is 3 years.
 
 Source: <https://www.hdfcfund.com/explore/mutual-funds/hdfc-elss-tax-saver-fund/direct>
 
@@ -26,7 +26,7 @@ Last updated from sources: 2026-11-08
 
 **Type:** `answer`
 
-HDFC Mid Cap Fund (Direct Plan) has a minimum SIP of ₹100.
+The minimum SIP for HDFC Mid Cap Fund (Direct Plan) is ₹100.
 
 Source: <https://www.hdfcfund.com/explore/mutual-funds/hdfc-mid-cap-fund/direct>
 
@@ -46,7 +46,7 @@ Last updated from sources: 2026-11-08
 
 **Type:** `answer`
 
-The riskometer for HDFC Mid Cap Fund (Direct Plan) is Very High. The benchmark is NIFTY Midcap 150 Index (Total Returns Index).
+The riskometer for HDFC Mid Cap Fund (Direct Plan) is Very High. Its benchmark is the NIFTY Midcap 150 Index (Total Returns Index).
 
 Source: <https://www.hdfcfund.com/explore/mutual-funds/hdfc-mid-cap-fund/direct>
 
@@ -56,7 +56,7 @@ Last updated from sources: 2026-11-08
 
 **Type:** `answer`
 
-You can visit the websites of CAMS, KFintech, or other mutual fund investment platforms and use your PAN and registered email ID to download the statement. Alternatively, you can log in to investment platforms or AMC websites, or request a consolidated account statement in capital gains format via CAMS or NSDL.
+You can download the capital gain statement online from the websites of CAMS, KFintech, or other mutual fund investment platforms using your PAN and registered email ID. Alternatively, you can log in to mutual fund distributor platforms, visit AMC websites, or request a Consolidated Account Statement in capital gains format via CAMS or NSDL.
 
 Source: <https://www.hdfcfund.com/learn/blog/how-get-capital-gain-statement-mutual-fund-schemes-india>
 

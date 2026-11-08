@@ -104,7 +104,9 @@ python eval/run_eval.py --base-url https://<preview-url>   # should match the lo
 vercel --prod                    # promote once the eval passes
 ```
 
-Status: the config files are ready, but nothing has been deployed yet. There is no live URL or measured cold-start time yet.
+**Live prototype:** https://hdfc-mf-faq-rag-orcin.vercel.app
+
+Status: deployed on Vercel (Hobby plan). The live API passed the full 32-question eval (`eval/run_eval.py --base-url https://hdfc-mf-faq-rag-orcin.vercel.app`), and a warm request answered in about 2 seconds. Gemini's free tier allows roughly 10 requests per minute, so a burst of questions may show a "service busy" message.
 
 ## Known limits
 
